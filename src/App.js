@@ -8,6 +8,8 @@ import { set } from "react-hook-form";
 const App = () => {
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState({});
+  const [order, setOrder] = useState({});
+  const [errorMessage, setErrorMessage] = useState('');
 
   const fetchProducts = async () => {
     const { data } = await commerce.products.list();
@@ -45,6 +47,23 @@ const App = () => {
     setCart(cart);
   }
 
+  const refreshCart = async () => {
+    const newCart = await commerce.cart.refresh();
+    setCart(newCart);
+  } 
+
+  const handleCaptureCheckout = async (checkoutTokenId , neworder) => {
+
+    try {
+      const Incomingorder = await commerce.checkout.capture(checkoutTokenId , neworder);
+      setOrder(Incomingorder);
+     refreshCart();
+    } catch (error) {
+      setErrorMessage(error.data.error.message)
+    }
+
+  }
+
   useEffect(() => {
     fetchProducts();
     fetchCart();
@@ -74,7 +93,7 @@ const App = () => {
               }                
             />
             <Route path="/checkout" element={
-              <Checkout cart={cart} />
+              <Checkout cart={cart} order={order} onCaptureCheckout={handleCaptureCheckout} error={errorMessage}  refreshCart={refreshCart} />
             } exact/>
         </Routes>
       </div>
